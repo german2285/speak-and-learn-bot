@@ -19,10 +19,7 @@ chats = {}
 
 # Создаем кнопку "Поиск собеседника"
 def get_main_markup():
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    search_button = types.KeyboardButton('Поиск собеседника')
-    markup.add(search_button)
-    return markup
+    return types.ReplyKeyboardMarkup(resize_keyboard=True).add(types.KeyboardButton('Поиск собеседника'))
 
 # Обработка команды /start
 @bot.message_handler(commands=['start'])
@@ -53,14 +50,18 @@ def search_for_companion(message):
         bot.send_message(message.chat.id, "Ищем собеседника...")
 
 # Пересылка сообщений между пользователями
-@bot.message_handler(func=lambda message: message.from_user.id in chats)
+@bot.message_handler(func=lambda message: message.from_user.id in chats, content_types=['text', 'voice'])
 def relay_message(message):
     user_id = message.from_user.id
     companion_id = chats[user_id]
 
     try:
-        # Пересылаем сообщение собеседнику
-        bot.send_message(companion_id, message.text)
+        if message.content_type == 'text':
+            # Пересылаем текстовое сообщение собеседнику
+            bot.send_message(companion_id, message.text)
+        elif message.content_type == 'voice':
+            # Пересылаем голосовое сообщение собеседнику
+            bot.send_voice(companion_id, message.voice.file_id)
     except Exception as e:
         bot.send_message(message.chat.id, "Не удалось отправить сообщение.")
         print(e)
